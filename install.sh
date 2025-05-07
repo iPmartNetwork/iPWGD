@@ -25,12 +25,12 @@ NPM_BIN_PATH=$(which npm)
 
 echo "✅ Node: $NODE_BIN_PATH ($(node -v)), NPM: $NPM_BIN_PATH ($(npm -v))"
 
-echo "📁 Cloning iPWGD project to /root/ipwgd..."
-rm -rf /root/ipwgd
-git clone https://github.com/iPmartNetwork/iPWGD /root/ipwgd
+echo "📁 Cloning iPWGD project to /etc/ipwgd..."
+rm -rf /etc/ipwgd
+git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 
 echo "🐍 Installing backend dependencies..."
-cd /root/ipwgd/backend
+cd /etc/ipwgd/backend
 cat > requirements.txt <<EOF
 Flask==2.3.2
 flask-cors==4.0.0
@@ -44,7 +44,7 @@ Description=iPWGD Backend (Flask)
 After=network.target
 
 [Service]
-WorkingDirectory=/root/ipwgd/backend
+WorkingDirectory=/etc/ipwgd/backend
 ExecStart=/usr/bin/python3 app.py
 Restart=always
 User=root
@@ -54,7 +54,7 @@ WantedBy=multi-user.target
 EOF
 
 echo "⚛️ Installing frontend (Next.js)..."
-cd /root/ipwgd/frontend
+cd /etc/ipwgd/frontend
 rm -rf node_modules package-lock.json
 npm install
 
@@ -70,7 +70,7 @@ Description=iPWGD Frontend (Next.js)
 After=network.target
 
 [Service]
-WorkingDirectory=/root/ipwgd/frontend
+WorkingDirectory=/etc/ipwgd/frontend
 ExecStart=$NPM_BIN_PATH start
 Restart=always
 User=root
