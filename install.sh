@@ -15,18 +15,18 @@ git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 echo "🐍 Setting up backend (Flask)..."
 cd /etc/ipwgd/backend
 
-# Create requirements.txt if it doesn't exist
-if [ ! -f requirements.txt ]; then
-  echo "⚠️ Creating requirements.txt..."
-  cat > requirements.txt <<EOF
+# ✅ Create requirements.txt BEFORE installation
+echo "Creating backend requirements.txt..."
+cat > requirements.txt <<EOF
 Flask==2.3.2
 flask-cors==4.0.0
 requests==2.31.0
 EOF
-fi
 
+# ✅ Install Python dependencies
 pip3 install -r requirements.txt
 
+# ✅ Create systemd service for backend
 cat >/etc/systemd/system/ipwgd-backend.service <<EOF
 [Unit]
 Description=iPWGD Backend (Flask)
@@ -47,6 +47,7 @@ cd /etc/ipwgd/frontend
 npm install
 npm run build
 
+# ✅ Create systemd service for frontend
 cat >/etc/systemd/system/ipwgd-frontend.service <<EOF
 [Unit]
 Description=iPWGD Frontend (Next.js)
@@ -69,5 +70,5 @@ systemctl daemon-reload
 systemctl enable --now ipwgd-backend
 systemctl enable --now ipwgd-frontend
 
-echo "✅ iPWGD has been successfully installed!"
-echo "➡️ Open your browser: http://<your-server-ip>:8000"
+echo "✅ iPWGD is fully installed and running!"
+echo "🔗 Access the dashboard at: http://<your-server-ip>:8000"
