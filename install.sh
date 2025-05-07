@@ -6,30 +6,33 @@ echo "📦 Updating system..."
 apt update && apt upgrade -y
 
 echo "🧹 Removing old Node.js..."
-apt remove --purge -y nodejs libnode-dev libnode72 libnode-dev-common || true
-rm -rf /usr/include/node /usr/lib/node_modules /etc/node /var/cache/apt/archives/nodejs_*
+apt remove --purge -y nodejs npm libnode-dev libnode72 libnode-dev-common || true
+rm -rf /usr/include/node /usr/lib/node_modules /etc/node /usr/bin/node /usr/bin/npm
 
-echo "📥 Installing Node.js v20..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs
+echo "📥 Installing NVM (Node Version Manager)..."
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 
-echo "📦 Installing other dependencies..."
-apt install -y git python3 python3-pip curl
+# Load NVM
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
 
-echo "📁 Cloning iPWGD to /etc/ipwgd..."
+echo "⬇️ Installing Node.js LTS version with NVM..."
+nvm install --lts
+nvm use --lts
+
+echo "✅ Node: $(node -v), NPM: $(npm -v)"
+
+echo "📁 Cloning iPWGD project to /etc/ipwgd..."
 rm -rf /etc/ipwgd
 git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 
-echo "🐍 Setting up backend (Flask)..."
+echo "🐍 Installing backend dependencies..."
 cd /etc/ipwgd/backend
-
-# Create requirements.txt
 cat > requirements.txt <<EOF
 Flask==2.3.2
 flask-cors==4.0.0
 requests==2.31.0
 EOF
-
 pip3 install -r requirements.txt
 
 cat >/etc/systemd/system/ipwgd-backend.service <<EOF
@@ -47,12 +50,19 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-echo "⚛️ Setting up frontend (Next.js)..."
+echo "⚛️ Installing frontend (Next.js)..."
 cd /etc/ipwgd/frontend
 rm -rf node_modules package-lock.json
+
+# Activate node environment again for subshells
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
+nvm use --lts
+
 npm install
 
-# ✅ Fix incorrect import path
+# ✅ Fix import path error for globals.css
+sed -i 's|style../styles|styles|g' ./app/layout.tsx
 sed -i 's|./globals.css|../styles/globals.css|g' ./app/layout.tsx
 
 npm run build
@@ -64,7 +74,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/etc/ipwgd/frontend
-ExecStart=/usr/bin/npm start
+ExecStart=/root/.nvm/versions/node/$(nvm version)/bin/npm start
 Restart=always
 User=root
 Environment=NEXT_PUBLIC_API_URL=http://localhost:13640
@@ -73,11 +83,11 @@ Environment=NEXT_PUBLIC_API_URL=http://localhost:13640
 WantedBy=multi-user.target
 EOF
 
-echo "🚀 Enabling services..."
+echo "🚀 Enabling and starting services..."
 systemctl daemon-reexec
 systemctl daemon-reload
 systemctl enable --now ipwgd-backend
 systemctl enable --now ipwgd-frontend
 
-echo "✅ iPWGD is successfully installed!"
-echo "🔗 Access the panel at: http://<your-server-ip>:8000"
+echo "✅ iPWGD successfully installed!"
+echo "🔗 Access panel at: http://<your-server-ip>:8000"
