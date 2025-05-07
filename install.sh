@@ -59,7 +59,7 @@ rm -rf node_modules package-lock.json
 npm install
 
 # ✅ Fix import path error for globals.css
-sed -i 's|style../styles|styles|g' ./app/layout.tsx
+sed -i 's|../style../styles|../styles|g' ./app/layout.tsx
 sed -i 's|./globals.css|../styles/globals.css|g' ./app/layout.tsx
 
 npm run build
