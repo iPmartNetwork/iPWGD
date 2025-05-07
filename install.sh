@@ -13,8 +13,15 @@ echo "📥 Installing Node.js (via n)..."
 apt install -y curl python3 python3-pip git build-essential
 
 curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -
+
+# ✅ Ensure n is available in PATH
 export PATH="/usr/local/bin:$PATH"
-n install lts
+
+# ✅ Install latest LTS version
+n lts
+
+# ✅ Ensure environment uses installed version
+export PATH="/usr/local/bin:$PATH"
 
 echo "✅ Node: $(node -v), NPM: $(npm -v)"
 
