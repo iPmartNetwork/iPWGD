@@ -5,34 +5,30 @@ set -e
 echo "📦 Updating system..."
 apt update && apt upgrade -y
 
-echo "🧹 Removing old Node.js and npm..."
+echo "🧹 Removing old Node.js..."
 apt remove --purge -y nodejs npm libnode-dev libnode72 libnode-dev-common || true
 rm -rf /usr/include/node /usr/lib/node_modules /etc/node /usr/bin/node /usr/bin/npm
 
-echo "📥 Installing Node.js & npm via 'n' (node version manager)..."
+echo "📥 Installing Node.js (via n)..."
 apt install -y curl python3 python3-pip git build-essential
 
-# نصب n و node
 curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -
 export PATH="/usr/local/bin:$PATH"
 n stable
 
-echo "🧠 Node.js version: $(node -v)"
-echo "🧠 npm version: $(npm -v)"
+echo "✅ Node: $(node -v), NPM: $(npm -v)"
 
-echo "📁 Cloning iPWGD to /etc/ipwgd..."
+echo "📁 Cloning iPWGD project to /etc/ipwgd..."
 rm -rf /etc/ipwgd
 git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 
-echo "🐍 Setting up backend (Flask)..."
+echo "🐍 Installing backend dependencies..."
 cd /etc/ipwgd/backend
-
 cat > requirements.txt <<EOF
 Flask==2.3.2
 flask-cors==4.0.0
 requests==2.31.0
 EOF
-
 pip3 install -r requirements.txt
 
 cat >/etc/systemd/system/ipwgd-backend.service <<EOF
@@ -50,12 +46,13 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-echo "⚛️ Setting up frontend (Next.js)..."
+echo "⚛️ Installing frontend (Next.js)..."
 cd /etc/ipwgd/frontend
 rm -rf node_modules package-lock.json
 npm install
 
-# مسیر درست CSS
+# ✅ Fix import path error for globals.css
+sed -i 's|style../styles|styles|g' ./app/layout.tsx
 sed -i 's|./globals.css|../styles/globals.css|g' ./app/layout.tsx
 
 npm run build
@@ -82,5 +79,5 @@ systemctl daemon-reload
 systemctl enable --now ipwgd-backend
 systemctl enable --now ipwgd-frontend
 
-echo "✅ iPWGD is fully installed and running!"
-echo "🔗 Access it at: http://<your-server-ip>:8000"
+echo "✅ iPWGD successfully installed!"
+echo "🔗 Access panel at: http://<your-server-ip>:8000"
