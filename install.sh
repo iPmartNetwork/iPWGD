@@ -9,19 +9,16 @@ echo "🧹 Removing old Node.js..."
 apt remove --purge -y nodejs npm libnode-dev libnode72 libnode-dev-common || true
 rm -rf /usr/include/node /usr/lib/node_modules /etc/node /usr/bin/node /usr/bin/npm
 
-echo "📥 Installing Node.js (via n)..."
-apt install -y curl python3 python3-pip git build-essential
+echo "📥 Installing NVM (Node Version Manager)..."
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 
-curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -
+# Load NVM
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
 
-# ✅ Ensure n is available in PATH
-export PATH="/usr/local/bin:$PATH"
-
-# ✅ Install latest LTS version
-n lts
-
-# ✅ Ensure environment uses installed version
-export PATH="/usr/local/bin:$PATH"
+echo "⬇️ Installing Node.js LTS version with NVM..."
+nvm install --lts
+nvm use --lts
 
 echo "✅ Node: $(node -v), NPM: $(npm -v)"
 
@@ -56,6 +53,12 @@ EOF
 echo "⚛️ Installing frontend (Next.js)..."
 cd /etc/ipwgd/frontend
 rm -rf node_modules package-lock.json
+
+# Activate node environment again for subshells
+export NVM_DIR="$HOME/.nvm"
+source "$NVM_DIR/nvm.sh"
+nvm use --lts
+
 npm install
 
 # ✅ Fix import path error for globals.css
@@ -71,7 +74,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/etc/ipwgd/frontend
-ExecStart=/usr/bin/npm start
+ExecStart=/root/.nvm/versions/node/$(nvm version)/bin/npm start
 Restart=always
 User=root
 Environment=NEXT_PUBLIC_API_URL=http://localhost:13640
