@@ -14,7 +14,7 @@ apt install -y curl python3 python3-pip git build-essential
 
 curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -
 export PATH="/usr/local/bin:$PATH"
-n stable
+n lts
 
 echo "✅ Node: $(node -v), NPM: $(npm -v)"
 
