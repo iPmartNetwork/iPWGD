@@ -5,16 +5,13 @@ set -e
 echo "📦 Updating system..."
 apt update && apt upgrade -y
 
-echo "🧹 Removing old Node.js versions..."
+echo "🧹 Removing old Node.js..."
 apt remove --purge -y nodejs libnode-dev libnode72 libnode-dev-common || true
 rm -rf /usr/include/node /usr/lib/node_modules /etc/node /var/cache/apt/archives/nodejs_*
 
-echo "📥 Installing Node.js v20 (from NodeSource)..."
+echo "📥 Installing Node.js v20..."
 curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt install -y nodejs
-
-echo "🧠 Node.js version: $(node -v)"
-echo "🧠 NPM version: $(npm -v)"
 
 echo "📦 Installing other dependencies..."
 apt install -y git python3 python3-pip curl
@@ -26,7 +23,7 @@ git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 echo "🐍 Setting up backend (Flask)..."
 cd /etc/ipwgd/backend
 
-# Create backend requirements if missing
+# Create requirements.txt
 cat > requirements.txt <<EOF
 Flask==2.3.2
 flask-cors==4.0.0
@@ -35,7 +32,6 @@ EOF
 
 pip3 install -r requirements.txt
 
-# systemd backend service
 cat >/etc/systemd/system/ipwgd-backend.service <<EOF
 [Unit]
 Description=iPWGD Backend (Flask)
@@ -55,9 +51,12 @@ echo "⚛️ Setting up frontend (Next.js)..."
 cd /etc/ipwgd/frontend
 rm -rf node_modules package-lock.json
 npm install
+
+# ✅ Fix incorrect import path
+sed -i 's|./globals.css|../styles/globals.css|g' ./app/layout.tsx
+
 npm run build
 
-# systemd frontend service
 cat >/etc/systemd/system/ipwgd-frontend.service <<EOF
 [Unit]
 Description=iPWGD Frontend (Next.js)
@@ -74,11 +73,11 @@ Environment=NEXT_PUBLIC_API_URL=http://localhost:13640
 WantedBy=multi-user.target
 EOF
 
-echo "🚀 Enabling and starting services..."
+echo "🚀 Enabling services..."
 systemctl daemon-reexec
 systemctl daemon-reload
 systemctl enable --now ipwgd-backend
 systemctl enable --now ipwgd-frontend
 
-echo "✅ iPWGD successfully installed!"
-echo "➡️ Access the admin panel: http://<your-server-ip>:8000"
+echo "✅ iPWGD is successfully installed!"
+echo "🔗 Access the panel at: http://<your-server-ip>:8000"
