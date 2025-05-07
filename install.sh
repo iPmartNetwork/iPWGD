@@ -9,7 +9,7 @@ mkdir -p /etc/ipwgd/frontend/app
 mkdir -p /etc/ipwgd/frontend/styles
 
 # Copy fixed layout.tsx
-cp layout-fixed.tsx /etc/ipwgd/frontend/app/layout.tsx
+cp layout.tsx /etc/ipwgd/frontend/app/layout.tsx
 
 # Copy fixed globals.css
 cp globals.css /etc/ipwgd/frontend/styles/globals.css
