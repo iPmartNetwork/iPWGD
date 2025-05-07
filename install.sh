@@ -29,7 +29,7 @@ Flask==2.3.2
 flask-cors==4.0.0
 requests==2.31.0
 EOF
-pip3 install -r requirements.txt
+pip3 install --no-cache-dir -r requirements.txt  # Added --no-cache-dir for efficiency
 
 cat >/etc/systemd/system/ipwgd-backend.service <<EOF
 [Unit]
@@ -41,6 +41,7 @@ WorkingDirectory=/etc/ipwgd/backend
 ExecStart=/usr/bin/python3 app.py
 Restart=always
 User=root
+Environment=PYTHONUNBUFFERED=1  # Ensures logs are not buffered
 
 [Install]
 WantedBy=multi-user.target
@@ -49,11 +50,11 @@ EOF
 echo "⚛️ Installing frontend (Next.js)..."
 cd /etc/ipwgd/frontend
 rm -rf node_modules package-lock.json
-npm install
+npm install --legacy-peer-deps  # Added flag to handle dependency conflicts
 
 # ✅ Fix import path error for globals.css
-sed -i 's|style../styles|styles|g' ./app/layout.tsx
-sed -i 's|./globals.css|../styles/globals.css|g' ./app/layout.tsx
+sed -i 's|style../styles|styles|g' ./app/layout.tsx || true
+sed -i 's|./globals.css|../styles/globals.css|g' ./app/layout.tsx || true
 
 npm run build
 
