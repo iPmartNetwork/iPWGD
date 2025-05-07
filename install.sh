@@ -5,16 +5,20 @@ set -e
 echo "📦 Updating system..."
 apt update && apt upgrade -y
 
-echo "🧹 Removing old Node.js..."
-apt remove --purge -y nodejs libnode-dev libnode72 libnode-dev-common || true
-rm -rf /usr/include/node /usr/lib/node_modules /etc/node /var/cache/apt/archives/nodejs_*
+echo "🧹 Removing old Node.js and npm..."
+apt remove --purge -y nodejs npm libnode-dev libnode72 libnode-dev-common || true
+rm -rf /usr/include/node /usr/lib/node_modules /etc/node /usr/bin/node /usr/bin/npm
 
-echo "📥 Installing Node.js v20..."
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs
+echo "📥 Installing Node.js & npm via 'n' (node version manager)..."
+apt install -y curl python3 python3-pip git build-essential
 
-echo "📦 Installing other dependencies..."
-apt install -y git python3 python3-pip curl
+# نصب n و node
+curl -fsSL https://raw.githubusercontent.com/tj/n/master/bin/n | bash -
+export PATH="/usr/local/bin:$PATH"
+n stable
+
+echo "🧠 Node.js version: $(node -v)"
+echo "🧠 npm version: $(npm -v)"
 
 echo "📁 Cloning iPWGD to /etc/ipwgd..."
 rm -rf /etc/ipwgd
@@ -23,7 +27,6 @@ git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 echo "🐍 Setting up backend (Flask)..."
 cd /etc/ipwgd/backend
 
-# Create requirements.txt
 cat > requirements.txt <<EOF
 Flask==2.3.2
 flask-cors==4.0.0
@@ -52,7 +55,7 @@ cd /etc/ipwgd/frontend
 rm -rf node_modules package-lock.json
 npm install
 
-# ✅ Fix incorrect import path
+# مسیر درست CSS
 sed -i 's|./globals.css|../styles/globals.css|g' ./app/layout.tsx
 
 npm run build
@@ -73,11 +76,11 @@ Environment=NEXT_PUBLIC_API_URL=http://localhost:13640
 WantedBy=multi-user.target
 EOF
 
-echo "🚀 Enabling services..."
+echo "🚀 Enabling and starting services..."
 systemctl daemon-reexec
 systemctl daemon-reload
 systemctl enable --now ipwgd-backend
 systemctl enable --now ipwgd-frontend
 
-echo "✅ iPWGD is successfully installed!"
-echo "🔗 Access the panel at: http://<your-server-ip>:8000"
+echo "✅ iPWGD is fully installed and running!"
+echo "🔗 Access it at: http://<your-server-ip>:8000"
