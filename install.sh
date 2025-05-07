@@ -1,23 +1,31 @@
 #!/bin/bash
+
 set -e
 
-echo "📦 Updating system and installing dependencies..."
+echo "📦 Updating system..."
 apt update && apt upgrade -y
-apt install -y curl git python3 python3-pip build-essential
 
-echo "📥 Installing NVM (Node Version Manager)..."
+echo "🧹 Removing old Node.js..."
+apt remove --purge -y nodejs npm || true
+rm -rf /usr/local/lib/node_modules /usr/local/bin/node /usr/local/bin/npm
+
+echo "📥 Installing NVM and Node.js 20..."
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 export NVM_DIR="$HOME/.nvm"
 source "$NVM_DIR/nvm.sh"
+nvm install 20
+nvm use 20
 
-nvm install --lts
-nvm use --lts
+NODE_PATH=$(which node)
+NPM_PATH=$(which npm)
 
-echo "🔧 Cloning iPWGD to /etc/ipwgd..."
+echo "✅ Node: $(node -v), NPM: $(npm -v)"
+
+echo "📁 Cloning iPWGD to /etc/ipwgd..."
 rm -rf /etc/ipwgd
 git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 
-echo "🐍 Installing Python backend dependencies..."
+echo "🐍 Installing backend..."
 cd /etc/ipwgd/backend
 cat > requirements.txt <<EOF
 Flask==2.3.2
@@ -26,7 +34,6 @@ requests==2.31.0
 EOF
 pip3 install -r requirements.txt
 
-echo "⚙️ Creating backend service..."
 cat >/etc/systemd/system/ipwgd-backend.service <<EOF
 [Unit]
 Description=iPWGD Backend (Flask)
@@ -42,64 +49,14 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-echo "⚛️ Installing frontend dependencies and fixing layout..."
+echo "⚛️ Installing frontend..."
 cd /etc/ipwgd/frontend
-rm -rf node_modules .next package-lock.json
-npm install
+rm -rf node_modules package-lock.json
+source "$NVM_DIR/nvm.sh"
+nvm use 20
+$NPM_PATH install
+$NPM_PATH run build
 
-cat > app/layout.tsx <<EOF
-import '../styles/globals.css';
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'iPWGD Dashboard',
-  description: 'WireGuard Dashboard for iPmart Network',
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head />
-      <body>{children}</body>
-    </html>
-  );
-}
-EOF
-
-mkdir -p styles
-cat > styles/globals.css <<EOF
-html, body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-  background-color: #0f172a;
-  color: #f1f5f9;
-}
-a {
-  color: #38bdf8;
-  text-decoration: none;
-}
-* {
-  box-sizing: border-box;
-}
-EOF
-
-cat > app/page.tsx <<EOF
-export default function Home() {
-  return (
-    <div style={{ padding: "2rem" }}>
-      <h1>Welcome to iPWGD</h1>
-      <p>This is the home page of your WireGuard Dashboard.</p>
-    </div>
-  );
-}
-EOF
-
-echo "🧱 Building frontend..."
-npm run build
-
-echo "⚙️ Creating frontend service..."
-NPM_BIN_PATH=$(which npm)
 cat >/etc/systemd/system/ipwgd-frontend.service <<EOF
 [Unit]
 Description=iPWGD Frontend (Next.js)
@@ -107,19 +64,19 @@ After=network.target
 
 [Service]
 WorkingDirectory=/etc/ipwgd/frontend
-ExecStart=$NPM_BIN_PATH start
+ExecStart=$NPM_PATH start
 Restart=always
 User=root
 Environment=NEXT_PUBLIC_API_URL=http://localhost:8000
+Environment=PORT=8000
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-echo "🚀 Enabling and starting services..."
-systemctl daemon-reexec
+echo "🚀 Enabling services..."
 systemctl daemon-reload
 systemctl enable --now ipwgd-backend
 systemctl enable --now ipwgd-frontend
 
-echo "✅ Installation complete. Access your panel at http://<your-server-ip>:8000"
+echo "✅ iPWGD is ready at http://<your-server-ip>:8000"
