@@ -20,14 +20,17 @@ echo "⬇️ Installing Node.js LTS version with NVM..."
 nvm install --lts
 nvm use --lts
 
-echo "✅ Node: $(node -v), NPM: $(npm -v)"
+NODE_BIN_PATH=$(which node)
+NPM_BIN_PATH=$(which npm)
 
-echo "📁 Cloning iPWGD project to /etc/ipwgd..."
-rm -rf /etc/ipwgd
-git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
+echo "✅ Node: $NODE_BIN_PATH ($(node -v)), NPM: $NPM_BIN_PATH ($(npm -v))"
+
+echo "📁 Cloning iPWGD project to /root/ipwgd..."
+rm -rf /root/ipwgd
+git clone https://github.com/iPmartNetwork/iPWGD /root/ipwgd
 
 echo "🐍 Installing backend dependencies..."
-cd /etc/ipwgd/backend
+cd /root/ipwgd/backend
 cat > requirements.txt <<EOF
 Flask==2.3.2
 flask-cors==4.0.0
@@ -41,7 +44,7 @@ Description=iPWGD Backend (Flask)
 After=network.target
 
 [Service]
-WorkingDirectory=/etc/ipwgd/backend
+WorkingDirectory=/root/ipwgd/backend
 ExecStart=/usr/bin/python3 app.py
 Restart=always
 User=root
@@ -51,14 +54,8 @@ WantedBy=multi-user.target
 EOF
 
 echo "⚛️ Installing frontend (Next.js)..."
-cd /etc/ipwgd/frontend
+cd /root/ipwgd/frontend
 rm -rf node_modules package-lock.json
-
-# Activate node environment again for subshells
-export NVM_DIR="$HOME/.nvm"
-source "$NVM_DIR/nvm.sh"
-nvm use --lts
-
 npm install
 
 # ✅ Fix import path error for globals.css
@@ -73,8 +70,8 @@ Description=iPWGD Frontend (Next.js)
 After=network.target
 
 [Service]
-WorkingDirectory=/etc/ipwgd/frontend
-ExecStart=/root/.nvm/versions/node/$(nvm version)/bin/npm start
+WorkingDirectory=/root/ipwgd/frontend
+ExecStart=$NPM_BIN_PATH start
 Restart=always
 User=root
 Environment=NEXT_PUBLIC_API_URL=http://localhost:13640
