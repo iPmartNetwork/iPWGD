@@ -1,4 +1,18 @@
-// Dashboard.tsx
-// Extracted from canvas — includes LiveCharts, Peer status, filtering, and role-based access
+import React from 'react';
 
-[... truncated for brevity — actual content will be pasted here dynamically at runtime ...]
+export default function Page() {
+  return (
+    <>
+      {/* Proper JSX structure */}
+      <html lang="en">
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <h1>Welcome to My Page</h1>
+          {/* Add your content here */}
+        </body>
+      </html>
+    </>
+  );
+}
