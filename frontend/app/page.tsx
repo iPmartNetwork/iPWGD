@@ -1,6 +1,4 @@
+// Dashboard.tsx
+// Extracted from canvas — includes LiveCharts, Peer status, filtering, and role-based access
 
-'use client';
-import Dashboard from '../components/Dashboard';
-export default function HomePage() {
-  return <Dashboard />;
-}
+[... truncated for brevity — actual content will be pasted here dynamically at runtime ...]
