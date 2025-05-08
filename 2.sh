@@ -51,6 +51,9 @@ EOF
 
 echo "⚛️ Installing frontend..."
 cd /etc/ipwgd/frontend
+
+#
+curl -L -o app/page.tsx https://raw.githubusercontent.com/iPmartNetwork/iPWGD/master/frontend/app/Dashboard.tsx
 rm -rf node_modules package-lock.json
 source "$NVM_DIR/nvm.sh"
 nvm use 20
