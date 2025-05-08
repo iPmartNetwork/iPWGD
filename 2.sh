@@ -52,7 +52,7 @@ EOF
 echo "⚛️ Installing frontend..."
 cd /etc/ipwgd/frontend
 
-#
+# ⬇️ Replace placeholder page.tsx with real Dashboard
 curl -L -o app/page.tsx https://raw.githubusercontent.com/iPmartNetwork/iPWGD/master/frontend/app/Dashboard.tsx
 rm -rf node_modules package-lock.json
 source "$NVM_DIR/nvm.sh"
