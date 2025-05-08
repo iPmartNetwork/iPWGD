@@ -21,23 +21,17 @@ NPM_PATH=$(which npm)
 
 echo "✅ Node: $(node -v), NPM: $(npm -v)"
 
-echo "📁 Cloning iPWGD..."
+echo "📁 Cloning iPWGD to /etc/ipwgd..."
 rm -rf /etc/ipwgd
-mkdir -p /etc/ipwgd
+git clone https://github.com/iPmartNetwork/iPWGD /etc/ipwgd
 
-# استخراج frontend نهایی
-echo "⬇️ Extracting frontend..."
-curl -L -o /tmp/ipwgd-frontend-final.zip https://sandbox.openai.com/mnt/data/ipwgd-frontend-final.zip
-unzip /tmp/ipwgd-frontend-final.zip -d /etc/ipwgd/frontend
-
-# استخراج backend نهایی
-echo "⬇️ Extracting backend..."
-curl -L -o /tmp/ipwgd-backend-project.zip https://sandbox.openai.com/mnt/data/ipwgd-backend-project.zip
-unzip /tmp/ipwgd-backend-project.zip -d /etc/ipwgd/backend
-
-# نصب وابستگی backend
 echo "🐍 Installing backend..."
 cd /etc/ipwgd/backend
+[ -f requirements.txt ] || cat > requirements.txt <<EOF
+Flask==2.3.2
+flask-cors==4.0.0
+requests==2.31.0
+EOF
 pip3 install -r requirements.txt
 
 cat >/etc/systemd/system/ipwgd-backend.service <<EOF
@@ -55,12 +49,12 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-# نصب و build frontend
 echo "⚛️ Installing frontend..."
 cd /etc/ipwgd/frontend
+rm -rf node_modules package-lock.json
 source "$NVM_DIR/nvm.sh"
 nvm use 20
-$NPM_PATH install
+$NPM_PATH install || true
 $NPM_PATH run build
 
 cat >/etc/systemd/system/ipwgd-frontend.service <<EOF
@@ -73,14 +67,13 @@ WorkingDirectory=/etc/ipwgd/frontend
 ExecStart=$NPM_PATH start
 Restart=always
 User=root
+Environment=NEXT_PUBLIC_API_URL=http://localhost:8000
 Environment=PORT=8000
-Environment=NEXT_PUBLIC_API_URL=http://localhost:13640
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# راه‌اندازی سرویس‌ها
 echo "🚀 Enabling services..."
 systemctl daemon-reexec
 systemctl daemon-reload
